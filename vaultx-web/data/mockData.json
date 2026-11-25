@@ -1,0 +1,86 @@
+{
+  "mockLogs": [
+    {
+      "timestamp": "2026-11-25T10:00:00.000Z",
+      "event": "CREATED",
+      "ipHash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+      "browser": "Chrome 131 / Windows",
+      "status": "success",
+      "remainingViews": 5
+    },
+    {
+      "timestamp": "2026-11-25T10:15:30.000Z",
+      "event": "VIEWED_META",
+      "ipHash": "f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3",
+      "browser": "Firefox 133 / macOS",
+      "status": "success",
+      "remainingViews": 5
+    },
+    {
+      "timestamp": "2026-11-25T11:02:45.000Z",
+      "event": "DOWNLOAD",
+      "ipHash": "f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3",
+      "browser": "Firefox 133 / macOS",
+      "status": "success",
+      "remainingViews": 4
+    },
+    {
+      "timestamp": "2026-11-25T12:30:00.000Z",
+      "event": "DOWNLOAD",
+      "ipHash": "1234abcd5678ef001234abcd5678ef00",
+      "browser": "Safari 18 / iOS",
+      "status": "success",
+      "remainingViews": 3
+    },
+    {
+      "timestamp": "2026-11-25T13:45:12.000Z",
+      "event": "DOWNLOAD",
+      "ipHash": "deadbeefcafe1234deadbeefcafe1234",
+      "browser": "Edge 131 / Windows",
+      "status": "denied",
+      "remainingViews": 3
+    },
+    {
+      "timestamp": "2026-11-25T14:00:00.000Z",
+      "event": "VIEWED_META",
+      "ipHash": "abcdef01234567890abcdef012345678",
+      "browser": "Chrome 131 / Linux",
+      "status": "success",
+      "remainingViews": 3
+    },
+    {
+      "timestamp": "2026-11-25T15:22:08.000Z",
+      "event": "PASSWORD_ATTEMPT",
+      "ipHash": "deadbeefcafe1234deadbeefcafe1234",
+      "browser": "Edge 131 / Windows",
+      "status": "denied",
+      "remainingViews": 3
+    },
+    {
+      "timestamp": "2026-11-25T16:10:55.000Z",
+      "event": "DOWNLOAD",
+      "ipHash": "abcdef01234567890abcdef012345678",
+      "browser": "Chrome 131 / Linux",
+      "status": "success",
+      "remainingViews": 2
+    }
+  ],
+  "mockCiphertextB64": "jHdlR3FqcW1hVXBzNHhGQmFPWUlPUT09OmxhYldheUNVZGlEbWRPcE1yNVZQZmc9PTo6MWFmMzJkZTUtYjI3Yy00OTQxLTk4YTAtYzNkZjg5MmFmNDU2OjpBRVMtMjU2LUdDTTo6U0hBLTI1Njo6ZTJjMzRmYTEyYjU2Nzg5MGFiY2RlZjAxMjM0NTY3ODlhYmNkZWYwMTIzNDU2Nzg5MGFiY2RlZjEyMzQ1Njc4",
+  "mockVaultMeta": {
+    "id": "a1b2c3d4e5f6",
+    "filename": "quarterly-report-Q4.pdf",
+    "mode": "MODE_B",
+    "algorithm": "AES-256-GCM",
+    "ivB64": "dGhpc0lzQVRlc3RJVg==",
+    "fileSize": 2457600,
+    "encryptedSize": 2457632,
+    "createdAt": "2026-11-25T10:00:00.000Z",
+    "expiresAt": "2026-11-26T10:00:00.000Z",
+    "maxDownloads": 5,
+    "remainingDownloads": 2,
+    "isPasswordProtected": true,
+    "isBurnAfterReading": false,
+    "revoked": false,
+    "sha256Checksum": "e2c34fa12b567890abcdef0123456789abcdef01234567890abcdef12345678"
+  }
+}

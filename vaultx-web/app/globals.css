@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #050508;
+    color: #FAFAFA;
+  }
+  code, kbd, samp, pre {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+  select option {
+    background-color: #0B0C10;
+    color: #FAFAFA;
+  }
+}
+
+@layer components {
+  .cyber-scene-bg {
+    background-color: #050508;
+  }
+
+  .perspective-stage {
+    perspective: 280px;
+    overflow: hidden;
+  }
+
+  .perspective-grid {
+    position: absolute;
+    inset: -50% -50% -15% -50%;
+    transform: rotateX(68deg);
+    transform-origin: 50% 100%;
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 46px 42px;
+    mask-image: linear-gradient(to bottom, transparent 10%, rgba(0, 0, 0, 0.9) 60%, #000 100%);
+  }
+
+  .hud-glass {
+    background-color: rgba(11, 12, 16, 0.90);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow:
+      0 24px 60px rgba(0, 0, 0, 0.9),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .hud-well {
+    background-color: #07080B;
+    box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.85);
+  }
+
+  .spin-radial-glow {
+    background: conic-gradient(
+      from 0deg at 50% 50%,
+      rgba(124, 58, 237, 0.22) 0deg,
+      transparent 80deg,
+      rgba(239, 68, 68, 0.16) 160deg,
+      transparent 230deg,
+      rgba(91, 33, 182, 0.18) 300deg,
+      transparent 345deg,
+      rgba(124, 58, 237, 0.22) 360deg
+    );
+    animation: spinRadial 24s linear infinite;
+  }
+
+  @keyframes spinRadial {
+    from {
+      transform: translate(-50%, -50%) rotate(0deg);
+    }
+    to {
+      transform: translate(-50%, -50%) rotate(360deg);
+    }
+  }
+}
+
+/* Custom neutral dark scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #050508;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.24);
+}

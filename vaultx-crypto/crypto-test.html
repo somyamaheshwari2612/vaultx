@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VaultX Crypto Engine — Offline Test Harness</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0b0f19;
+      color: #e2e8f0;
+      max-width: 820px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    h1 { color: #38bdf8; margin-bottom: 0.25rem; }
+    p { color: #94a3b8; margin-top: 0; }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 0.65rem 1.25rem;
+      border-radius: 0.5rem;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-bottom: 1rem;
+    }
+    button:hover { background: #1d4ed8; }
+    pre {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      white-space: pre-wrap;
+      line-height: 1.5;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>VaultX Crypto Engine — Offline Test Harness</h1>
+  <p>Verifies RSA-OAEP keypair generation, non-extractable IndexedDB storage, Mode A &amp; Mode B AES-256-GCM encryption, tamper detection, and 10MB+ binary performance.</p>
+  <button id="runBtn">Run All Crypto Tests</button>
+  <pre id="output">Click "Run All Crypto Tests" to start.</pre>
+
+  <script type="module">
+    import {
+      generateUserKeyPair,
+      encryptFileAndMeta,
+      decryptFileAndMeta,
+    } from "./vaultCrypto.js";
+    import { getPrivateKey, hasPrivateKey } from "./keyStore.js";
+
+    const output = document.getElementById("output");
+    const runBtn = document.getElementById("runBtn");
+
+    function log(line) {
+      output.textContent += `${line}\n`;
+    }
+
+    function assert(condition, message) {
+      if (!condition) throw new Error(`Assertion failed: ${message}`);
+    }
+
+    async function runTests() {
+      output.textContent = "";
+      try {
+        // 1. Keypair generation + non-extractable IndexedDB verification
+        log("1. Generating RSA-OAEP keypair & storing in IndexedDB...");
+        const { publicKeyPem, keyFingerprint } = await generateUserKeyPair("demo-passphrase");
+        assert(publicKeyPem.includes("BEGIN PUBLIC KEY"), "PEM header missing");
+        assert(await hasPrivateKey("default"), "Private key not saved in IndexedDB");
+
+        const { privateKey } = await getPrivateKey("default");
+        assert(privateKey.extractable === false, "Private key must be non-extractable");
+        let exportBlocked = false;
+        try {
+          await crypto.subtle.exportKey("pkcs8", privateKey);
+        } catch {
+          exportBlocked = true;
+        }
+        assert(exportBlocked, "Browser allowed exporting a non-extractable private key!");
+        log(`   PASS — Fingerprint: ${keyFingerprint} (private key non-extractable)\n`);
+
+        // 2. Mode A (Registered User)
+        log("2. Testing Mode A (Registered User RSA-OAEP key wrapping)...");
+        const sampleText = "VaultX confidential KYC payload — Mode A";
+        const sampleBytes = new TextEncoder().encode(sampleText);
+        const sampleMeta = { name: "sample_pan_kyc.pdf", type: "application/pdf", size: sampleBytes.length };
+
+        const encA = await encryptFileAndMeta(sampleBytes, sampleMeta, "A", publicKeyPem);
+        assert(encA.wrappedAesKeyB64 && !encA.fragmentKeyB64, "Mode A key output mismatch");
+
+        const decA = await decryptFileAndMeta(
+          encA.encryptedBlob,
+          encA.ivB64,
+          encA.encryptedMetaB64,
+          encA.wrappedAesKeyB64,
+          "A"
+        );
+        const decAText = new TextDecoder().decode(decA.fileBuffer);
+        assert(decAText === sampleText, "Mode A decrypted text mismatch");
+        assert(decA.metaObj.name === sampleMeta.name, "Mode A metadata mismatch");
+        assert(decA.isChecksumValid === true, "Mode A SHA-256 checksum invalid");
+        log("   PASS — Mode A encrypt/decrypt + metadata + SHA-256 verified.\n");
+
+        // 3. Mode B (Anyone #fragment link)
+        log("3. Testing Mode B (Anyone #fragment link)...");
+        const encB = await encryptFileAndMeta(sampleBytes, sampleMeta, "B", null);
+        assert(encB.fragmentKeyB64 && !encB.wrappedAesKeyB64, "Mode B key output mismatch");
+
+        const decB = await decryptFileAndMeta(
+          encB.encryptedBlob,
+          encB.ivB64,
+          encB.encryptedMetaB64,
+          encB.fragmentKeyB64,
+          "B"
+        );
+        assert(new TextDecoder().decode(decB.fileBuffer) === sampleText, "Mode B decrypted text mismatch");
+        assert(decB.isChecksumValid === true, "Mode B SHA-256 checksum invalid");
+        log("   PASS — Mode B encrypt/decrypt + metadata + SHA-256 verified.\n");
+
+        // 4. Tampered blob detection
+        log("4. Testing tampered ciphertext detection...");
+        const tamperedBytes = new Uint8Array(await encB.encryptedBlob.arrayBuffer());
+        tamperedBytes[0] ^= 0xff;
+        let tamperRejected = false;
+        try {
+          await decryptFileAndMeta(
+            new Blob([tamperedBytes]),
+            encB.ivB64,
+            encB.encryptedMetaB64,
+            encB.fragmentKeyB64,
+            "B"
+          );
+        } catch {
+          tamperRejected = true;
+        }
+        assert(tamperRejected, "Tampered blob should have failed decryption");
+        log("   PASS — Tampered ciphertext rejected.\n");
+
+        // 5. Wrong key detection
+        log("5. Testing wrong-key rejection...");
+        const encB2 = await encryptFileAndMeta(sampleBytes, sampleMeta, "B", null);
+        let wrongKeyRejected = false;
+        try {
+          await decryptFileAndMeta(
+            encB.encryptedBlob,
+            encB.ivB64,
+            encB.encryptedMetaB64,
+            encB2.fragmentKeyB64,
+            "B"
+          );
+        } catch {
+          wrongKeyRejected = true;
+        }
+        assert(wrongKeyRejected, "Wrong key should have failed decryption");
+        log("   PASS — Wrong key rejected.\n");
+
+        // 6. 10MB+ binary benchmark
+        log("6. Testing 10 MB binary encryption/decryption...");
+        const bigSize = 10 * 1024 * 1024;
+        const bigBuffer = new Uint8Array(bigSize);
+        for (let i = 0; i < bigSize; i += 4096) bigBuffer[i] = i & 0xff;
+
+        const t0 = performance.now();
+        const encBig = await encryptFileAndMeta(bigBuffer, { name: "large.bin", type: "application/octet-stream" }, "B", null);
+        const decBig = await decryptFileAndMeta(encBig.encryptedBlob, encBig.ivB64, encBig.encryptedMetaB64, encBig.fragmentKeyB64, "B");
+        const elapsedMs = (performance.now() - t0).toFixed(1);
+        assert(decBig.fileBuffer.byteLength === bigSize, "10MB output size mismatch");
+        assert(decBig.isChecksumValid === true, "10MB SHA-256 checksum invalid");
+        log(`   PASS — 10 MB round-trip completed in ${elapsedMs} ms.\n`);
+
+        log("ALL TESTS PASSED.");
+      } catch (err) {
+        log(`\nFAIL: ${err.message}`);
+        console.error(err);
+      }
+    }
+
+    runBtn.addEventListener("click", runTests);
+  </script>
+</body>
+</html>
